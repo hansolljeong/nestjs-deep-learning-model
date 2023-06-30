@@ -1,16 +1,19 @@
-import { Body, Controller, Post, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { GenderFilterService } from './gender-filter.service';
 import { AuthGuard } from '@nestjs/passport';
-import { GetUser } from 'src/auth/decorator/get-user.decorator';
-import { UserEntity } from 'src/auth/user.entity';
 import * as msgpack from 'msgpack-lite';
+import * as fs from 'fs';
 
-function genderFilter(imageData: Buffer): number {
+async function genderFilter(imageData: Buffer): Promise<number> {
   // 이미지 분석 로직 및 성별 확률 값을 계산하는 로직 필요
-
   const genderProbability = Math.random();
 
   return genderProbability;
+}
+
+async function readImageAsBytes(): Promise<Buffer> {
+  const imagePath = 'public/images/face1.png';
+  return fs.readFileSync(imagePath);
 }
 
 @Controller('gender-filter')
@@ -18,14 +21,10 @@ export class GenderFilterController {
   constructor(private readonly genderFilterService: GenderFilterService) {}
 
   @UseGuards(AuthGuard('jwt'))
-  @Post('/gender-filter')
-  getGenderFilter(
-    @GetUser() user: UserEntity,
-    @Body() requestData: { img: Buffer },
-    @Res() response: Response,
-  ) {
+  @Post('')
+  async getGenderFilter() {
     // 성별 구분 값 return 하도록 수정 필요
-    const genderProbability = genderFilter(requestData.img);
+    const genderProbability = await genderFilter(await readImageAsBytes());
 
     const responseData = {
       output: genderProbability,
@@ -33,6 +32,6 @@ export class GenderFilterController {
 
     const encodedResponseData = msgpack.encode(responseData);
 
-    return;
+    return encodedResponseData;
   }
 }
